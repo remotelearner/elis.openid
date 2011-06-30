@@ -96,7 +96,7 @@ Dependencies
 
 The OpenID component does not depend on anything other than having a functioning Moodle install. The dependency chart below explains how each of the components depends on one another and Moodle itself.
 
-![ELIS Community Dependencies](https://github.com/remotelearner/elis.openid/raw/master/elis_community_dependencies.png)
+![ELIS Community Dependencies](https://github.com/downloads/remotelearner/elis.base/elis_community_dependencies.png)
 
 
 How to get the code
