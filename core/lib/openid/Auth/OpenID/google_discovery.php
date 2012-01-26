@@ -396,10 +396,12 @@ class GApps_OpenID_SimpleSign {
         $chain = implode("", $certs);
         $fname = tempnam(sys_get_temp_dir(), "cert");
         $handle = fopen($fname,"w");
-        if ($handle) {
-            fwrite($handle,$chain);
-            fclose($handle);            
-            return $fname;        
+        if ($handle && fwrite($handle, $chain) == strlen($chain)) {
+            fclose($handle);
+            return $fname;
+        } else {
+            error_log("/lib/openid/Auth/OpenID/google_discovery.php::save_cert_chain() - error creating temporary file: {$fname} (check file system full)");
+            return null;
         }
     }
 
@@ -450,17 +452,17 @@ class GApps_OpenID_SimpleSign {
         } else {
             error_log('/lib/openid/Auth/OpenID/google_discovery.php: error getting certificate public key.');
         }
+        $trusted = $this->validate_chain($certs);
         if (!empty($cert)) {
             openssl_x509_free($cert);
         }
-        $trusted = $this->validate_chain($certs);
         if (!$trusted) {
             throw new GApps_Discovery_Exception("Can not verify trust chain.");
         }
         $subject = $parsed_certificate["subject"];
         $signed_by = strtolower($subject["CN"]);
         return $signed_by;
-    }    
+    }
 }
 
 class GApps_Discovery_Exception extends Exception {}
