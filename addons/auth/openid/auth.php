@@ -60,17 +60,17 @@ class auth_plugin_openid extends auth_plugin_base {
             set_config('openid_privacy_url', '', 'auth/openid');
             $this->config->openid_privacy_url='';
         }
-        
+
         if (!isset($this->config->openid_non_whitelisted_status)) {
             set_config('openid_non_whitelisted_status', 0, 'auth/openid');
             $this->config->openid_non_whitelisted_status=0;
         }
-        
+
         if (!isset($this->config->auth_openid_allow_account_change)) {
             set_config('auth_openid_allow_account_change', 'false', 'auth/openid');
             $this->config->auth_openid_allow_account_change='false'; // TBD: was true
         }
-        
+
         if (!isset($this->config->auth_openid_allow_muliple)) {
             set_config('auth_openid_allow_muliple', 'true', 'auth/openid');
             $this->config->auth_openid_allow_muliple='true';
@@ -121,7 +121,7 @@ class auth_plugin_openid extends auth_plugin_base {
             define('OPENID_USE_IDENTIFIER_SELECT', 'false');
         }
     }
-    
+
     /**
      * Returns true if this authentication plugin can change the users'
      * password.
@@ -252,7 +252,7 @@ class auth_plugin_openid extends auth_plugin_base {
      */
     function process_config($config) {
         $page = optional_param('page', '');
-        
+
         if ($page == 'users') {
             $vars = array(
                 'auth_openid_allow_account_change',
@@ -276,41 +276,41 @@ class auth_plugin_openid extends auth_plugin_base {
         } elseif ($page == 'servers') {
             $vars = array();
             $add = optional_param('add_server', null);
-            
+
             if ($add != null) {
                 $record = new object();
                 $record->server = required_param('openid_add_server');
                 $record->listtype = optional_param('openid_add_listtype', 0, PARAM_INT);
-                
+
                 if ($record->listtype != OPENID_WHITELIST && $record->listtype != OPENID_BLACKLIST) {
                     $record->listtype = OPENID_GREYLIST;
                 }
-                
+
                 if (!empty($record->server) && !record_exists('openid_servers', 'server', $record->server)) {
                     insert_record('openid_servers', $record);
                 }
             } else {
                 $servers = optional_param('servers', array());
-                
+
                 foreach ($servers as $id=>$val) {
                     $id = intval($id);
                     $val = intval($val);
-                    
+
                     if ($id < 1) {
                         continue;
                     }
-                    
+
                     // If we encounter a 'delete' request
                     if ($val < 0) { // BJB110110: was ($val < 1) which caused GREYLISTed Servers (defined as zero) to be deleted whenever form saved!
                         delete_records('openid_servers', 'id', $id);
                         continue;
                     }
-                    
+
                     // Otherwise, force a valid value (default 'GREYLIST')
                     if ($val != OPENID_WHITELIST && $val != OPENID_BLACKLIST) {
                         $val = OPENID_GREYLIST;
                     }
-                    
+
                     // And update record
                     $record = new object();
                     $record->id = $id;
@@ -319,12 +319,12 @@ class auth_plugin_openid extends auth_plugin_base {
                 }
             }
         }
-        
+
         foreach ($vars as $var) {
             set_config($var, isset($config->$var) ? $config->$var : '', 'auth/openid');
             $this->config->$var = isset($config->$var) ? $config->$var : '';
         }
-        
+
         return false;
     }
 
@@ -369,7 +369,7 @@ class auth_plugin_openid extends auth_plugin_base {
         if (empty($CFG->alternateloginurl)) {
             $CFG->alternateloginurl = $CFG->wwwroot.'/auth/openid/login.php';
         }
-        
+
         if ($mode == null && $openid_url != null) {
             // If we haven't received a response, then initiate a request
             $this->do_request();
@@ -387,7 +387,7 @@ class auth_plugin_openid extends auth_plugin_base {
 
                 $url = $resp->identity_url;
                 $server = $resp->endpoint->server_url;
-                
+
                 if (!openid_server_allowed($server, $this->config)) {
                     print_error('auth_openid_server_blacklisted', 'auth_openid',
                                 '',  $server);
@@ -397,14 +397,14 @@ class auth_plugin_openid extends auth_plugin_base {
                     // Get the user associated with the OpenID
                     $userid = get_field('openid_urls', 'userid', 'url', $url);
                     $user = get_complete_user_data('id', $userid);
-                    
+
                     // If the user isn't found then there's a database
                     // discrepancy.  We delete this entry and create a new user
                     if (!$user) {
                         delete_records('openid_urls', 'url', $url);
                         $user = $this->_open_account($resp);
                     }
-                    
+
                     // Otherwise, the user is found and we call the optional
                     // on_openid_login function
                     elseif (function_exists('on_openid_login')) {
@@ -423,7 +423,7 @@ class auth_plugin_openid extends auth_plugin_base {
             }
         }
     }
-    
+
     /**
      * Initiate an OpenID request
      *
@@ -483,24 +483,24 @@ class auth_plugin_openid extends auth_plugin_base {
                 $req = array();
                 $opt = array();
                 $privacy_url = null;
-                
+
                 // Required fields
                 if (!empty($this->config->openid_sreg_required)) {
                     $req = array_map('trim', explode(',', $this->config->openid_sreg_required));
                     $sreg_added = true;
                 }
-                
+
                 // Optional fields
                 if (!empty($this->config->openid_sreg_optional)) {
                     $opt = array_map('trim', explode(',', $this->config->openid_sreg_optional));
                     $sreg_added = true;
                 }
-                
+
                 // Privacy statement
                 if ($sreg_added && !empty($this->config->openid_privacy_url)) {
                     $privacy_url = $this->config->openid_privacy_url;
                 }
-                
+
                 // We call the on_openid_do_request event handler function if it
                 // exists. This is called before the simple registration (sreg)
                 // extension is added to allow changes to be made to the sreg
@@ -508,7 +508,7 @@ class auth_plugin_openid extends auth_plugin_base {
                 if (function_exists('on_openid_do_request')) {
                     on_openid_do_request($authreq);
                 }
-                
+
                 // Finally, the simple registration data is added
                 if ($sreg_added && !(sizeof($req)<1 && sizeof($opt)<1)) {
 
@@ -545,17 +545,17 @@ class auth_plugin_openid extends auth_plugin_base {
             if (empty($process_url)) {
                 $process_url = $CFG->wwwroot.'/login/index.php';
             }
-            
+
             if (is_array($params) && !empty($params)) {
                 $query = '';
-                
+
                 foreach ($params as $key=>$val) {
                     $query .= '&'.$key.'='.$val;
                 }
-                
+
                 $process_url .= '?'.substr($query, 1);
             }
-            
+
             $trust_root = $CFG->wwwroot.'/';
             $_SESSION['openid_process_url'] = $process_url;
 
@@ -565,34 +565,34 @@ class auth_plugin_openid extends auth_plugin_base {
                 print_error('auth_openid_server_blacklisted', 'auth_openid',
                             '', $authreq->endpoint->server_url);
             }
-            
+
             // If this is an OpenID 1.x request, redirect the user
             elseif ($authreq->shouldSendRedirect()) {
                 $redirect_url = $authreq->redirectURL($trust_root, $process_url);
-                
+
                 // If the redirect URL can't be built, display an error message.
                 if (Auth_OpenID::isFailure($redirect_url)) {
                     error($redirect_url->message);
                 }
-                
+
                 // Otherwise, we want to redirect
                 else {
                     redirect($redirect_url);
                 }
             }
-            
+
             // or use the post form method if using OpenID 2.0
             else {
                 // Generate form markup and render it.
                 $form_id = 'openid_message';
                 $message = $authreq->getMessage($trust_root, $process_url, false);
-                
+
                 // Display an error if the form markup couldn't be generated;
                 // otherwise, render the HTML.
                 if (Auth_OpenID::isFailure($message)) {
                     error($message);
                 }
-                
+
                 else {
                     $form_html = $message->toFormMarkup($authreq->endpoint->server_url,
                         array('id' => $form_id), get_string('continue'));
@@ -602,7 +602,7 @@ class auth_plugin_openid extends auth_plugin_base {
             }
         }
     }
-    
+
     /**
      * Process an OpenID response
      *
@@ -616,7 +616,7 @@ class auth_plugin_openid extends auth_plugin_base {
      */
     function process_response($notify_errors=false) {
         global $CFG;
-        
+
         // Create the consumer instance
         $store = new Auth_OpenID_FileStore($CFG->dataroot.'/openid');
         $consumer = new Auth_OpenID_Consumer($store);
@@ -625,25 +625,25 @@ class auth_plugin_openid extends auth_plugin_base {
         }
         $resp = $consumer->complete($_SESSION['openid_process_url']);
         unset($_SESSION['openid_process_url']);
-        
+
         // Act based on response status
         switch ($resp->status) {
         case Auth_OpenID_SUCCESS:
             // Auth succeeded
             return $resp;
-        
+
         case Auth_OpenID_CANCEL:
             // Auth cancelled by user.
             $msg = get_string('auth_openid_user_cancelled', 'auth_openid');
-            
+
             if ($notify_errors) {
                 notify($msg);
             } else {
                 error($msg);
             }
-            
+
             break;
-        
+
         case Auth_OpenID_FAILURE:
             // Auth failed for some reason
             $msg = openid_get_friendly_message($resp->message);
@@ -655,10 +655,10 @@ class auth_plugin_openid extends auth_plugin_base {
                 error($msg);
             }
         }
-        
+
         return false;
     }
-    
+
     /**
      * Open user account using SREG & AX data if available
      * If no matching user found and create flag is true, creates new user account
@@ -717,10 +717,26 @@ class auth_plugin_openid extends auth_plugin_base {
         $user->id = $usertmp->id;
         openid_append_url($user, $url);
 
+        if (!isset($user->city) || $user->city == '') {
+            //use "*" as the default city name
+            $user->city = '*';
+        }
+        if (empty($user->country) && !empty($CFG->country)) {
+            //use the configured default country code
+            $user->country = $CFG->country;
+        }
+        if (empty($user->country)) {
+            //out of other options, to try to copy the admin's country
+            if ($admin = get_admin()) {
+                $user->country = $admin->country;
+            }
+        }
+
         update_record('user', $user);
         $user = get_complete_user_data('id', $user->id);
 
-        events_trigger('user_created', $user);
+        events_trigger('user_created', $user); // BJB120125 - moved from below redirect for alfresco, etc...
+
         if (function_exists('on_openid_create_account')) {
             on_openid_create_account($resp, $user);
         }
