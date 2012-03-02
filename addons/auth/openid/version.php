@@ -11,6 +11,6 @@
 
 $plugin->version  = 2008012500;  // The current module version (Date: YYYYMMDDXX)
 $plugin->requires = 2007101507;  // Requires this Moodle version
-$plugin->release = '1.9.2';      // ELIS Component Version
+$plugin->release = '1.9.3';      // ELIS Component Version
 
 ?>

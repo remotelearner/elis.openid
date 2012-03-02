@@ -20,7 +20,7 @@ class block_openid extends block_base {
     function init() {
         $this->title = get_string('block_title','auth_openid');
         $this->version = 2007090500;
-        $this->release = '1.9.0';
+        $this->release = '1.9.3';
     }
 
     function applicable_formats() {
